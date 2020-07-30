@@ -1,0 +1,372 @@
+--- neural_network.cpp.ORIG	2020-07-19 08:52:16.401767221 +0200
++++ neural_network.cpp	2020-07-19 12:05:04.133234343 +0200
+@@ -1450,7 +1450,7 @@
+     buffer << "Neural network:\n";
+ 
+     buffer << "Inputs names:\n";
+-    buffer << inputs_names << endl;
++//    buffer << inputs_names << endl;
+ 
+     // Layers
+ 
+@@ -1466,7 +1466,7 @@
+     }
+ 
+     buffer << "Outputs names:\n";
+-    buffer << outputs_names << endl;
++//    buffer << outputs_names << endl;
+ 
+     return buffer.str();
+ }
+@@ -1479,11 +1479,330 @@
+     return Matrix<string>();
+ }
+ 
++/// Serializes the neural network object into a XML document of the TinyXML library.
++/// See the OpenNN manual for more information about the format of this element.
++///@todo
++/// Modified by Axel Spoerl, 18.07.2020
++/// Intention: Complete to_XML function
++
++// Serialize Inputs
++void inputs2xml (tinyxml2::XMLDocument* doc, vector <string> inputs_names, tinyxml2::XMLElement* neural_network_object) {
++
++        // string for operations
++        string xmltext;
++
++        // Create an inputs element
++        tinyxml2::XMLElement* inputs_element = doc->NewElement("Inputs");
++        neural_network_object->InsertFirstChild(inputs_element);
++
++        // First part of the input section is the number of inputs
++        tinyxml2::XMLElement* inputs_number_element = doc->NewElement("InputsNumber");
++        inputs_element->InsertFirstChild(inputs_number_element);
++
++        // Read number of inputs from size of the input names vector
++        // ...and copy it to a char array as required by tinyxml
++        xmltext = to_string(inputs_names.size());
++        char * INP_NUM = new char[xmltext.length() + 1];
++        strcpy (INP_NUM,xmltext.c_str());
++
++        // Write number of inputs to the doc, followed by the end child
++        tinyxml2::XMLText* inputs_number_text = doc->NewText(INP_NUM);
++        inputs_number_element->InsertEndChild(inputs_number_text);
++        inputs_element->InsertEndChild(inputs_number_element);
++        delete INP_NUM;  // no longer needed
++
++        // Loop over inputs vector to write the Inputs children
++        for (size_t i=0; i != inputs_names.size(); ++i) {
++
++            // Add item element with index
++            int item_index = i + 1;
++            tinyxml2::XMLElement* input_item = doc->NewElement("Item");
++            input_item->SetAttribute("Index", item_index);
++            inputs_element->InsertFirstChild(inputs_number_element);
++
++            // Add name element
++            tinyxml2::XMLElement* input_name_element = doc->NewElement("Name");
++            input_item->InsertFirstChild(input_name_element);
++            xmltext = inputs_names[i];
++            char * INP_NAME = new char[xmltext.length() + 1];
++            strcpy (INP_NAME,xmltext.c_str());
++            tinyxml2::XMLText* input_name_text = doc->NewText(INP_NAME);
++            input_name_element->InsertEndChild(input_name_text);
++            input_item->InsertEndChild(input_name_element);
++            delete INP_NAME; // no longer needed
++
++            // Add Units and Description, both empty for the time being.
++            // Units
++            tinyxml2::XMLElement* input_units = doc->NewElement("Units");
++            input_item->InsertFirstChild(input_units);
++            tinyxml2::XMLText* input_units_text = doc->NewText(""); // Add Units text source here
++            input_units->InsertEndChild(input_units_text);
++            input_item->InsertEndChild(input_units);
++
++            // Description
++            tinyxml2::XMLElement* input_description = doc->NewElement("Description");
++            input_item->InsertFirstChild(input_description);
++            tinyxml2::XMLText* input_description_text = doc->NewText(""); // Add Description text source here
++            input_description->InsertEndChild(input_description_text);
++            input_item->InsertEndChild(input_description);
++
++            // Finish the input item
++            inputs_element->InsertEndChild(input_item);
++
++        }
++
++        // Finish the input section of the document
++        //inputs_element->InsertEndChild();
++        neural_network_object->InsertEndChild(inputs_element);
++
++}
++
++
++
++// Serialize Outputs
++void outputs2xml (tinyxml2::XMLDocument* doc, vector <string> outputs_names, tinyxml2::XMLElement* neural_network_object) {
++
++        // string for operations
++        string xmltext;
++
++        // Start the output section
++        tinyxml2::XMLElement* outputs_element = doc->NewElement("Outputs");
++        neural_network_object->InsertFirstChild(outputs_element);
++
++        // First part of the output section is the number of outputs
++        tinyxml2::XMLElement* outputs_number_element = doc->NewElement("OutputsNumber");
++        outputs_element->InsertFirstChild(outputs_number_element);
++
++        // Read number of outputs from size of the output names vector
++        // ...and copy it to a char array as required by tinyxml
++        xmltext = to_string(outputs_names.size());
++        char * INP_NUM = new char[xmltext.length() + 1];
++        strcpy (INP_NUM,xmltext.c_str());
++
++        // Write number of outputs to the doc, followed by the end child
++        tinyxml2::XMLText* outputs_number_text = doc->NewText(INP_NUM);
++        outputs_number_element->InsertEndChild(outputs_number_text);
++        outputs_element->InsertEndChild(outputs_number_element);
++        delete INP_NUM;  // no longer needed
++
++        // Loop over outputs vector to write the Outputs children
++        for (size_t i=0; i != outputs_names.size(); ++i) {
++
++            // Add item element with index
++            int item_index = i + 1;
++            tinyxml2::XMLElement* output_item = doc->NewElement("Item");
++            output_item->SetAttribute("Index", item_index);
++            outputs_element->InsertFirstChild(outputs_number_element);
++
++            // Add name element
++            tinyxml2::XMLElement* output_name_element = doc->NewElement("Name");
++            output_item->InsertFirstChild(output_name_element);
++            xmltext = outputs_names[i];
++            char * INP_NAME = new char[xmltext.length() + 1];
++            strcpy (INP_NAME,xmltext.c_str());
++            tinyxml2::XMLText* output_name_text = doc->NewText(INP_NAME);
++            output_name_element->InsertEndChild(output_name_text);
++            output_item->InsertEndChild(output_name_element);
++            delete INP_NAME; // no longer needed
++
++            // Add Units and Description, both empty for the time being.
++            // Units
++            tinyxml2::XMLElement* output_units = doc->NewElement("Units");
++            output_item->InsertFirstChild(output_units);
++            tinyxml2::XMLText* output_units_text = doc->NewText(""); // Add Units text source here
++            output_units->InsertEndChild(output_units_text);
++            output_item->InsertEndChild(output_units);
++
++            // Description
++            tinyxml2::XMLElement* output_description = doc->NewElement("Description");
++            output_item->InsertFirstChild(output_description);
++            tinyxml2::XMLText* output_description_text = doc->NewText(""); // Add Description text source here
++            output_description->InsertEndChild(output_description_text);
++            output_item->InsertEndChild(output_description);
++
++            // Finish the output item
++            outputs_element->InsertEndChild(output_item);
++
++        }
++
++        // Finish the output section of the document
++        //outputs_element->InsertEndChild();
++        neural_network_object->InsertEndChild(outputs_element);
++
++}
++
++
++// Main function
++tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
++{
++
++    // Retrieve information to serialize the neural network
++    const size_t layers_number      = get_layers_number();
++    vector <string> inputs_names    = get_inputs_names();
++    vector <string> outputs_names   = get_outputs_names();
++    vector <Layer*> layers_pointers = get_layers_pointers();
++    vector <size_t> architecture    = get_architecture();
++
++    // Do we have a network at all? Throw runtime error if Network has no layers.
++    if (layers_number == 0) {throw std::runtime_error( "Invalid NeuralNetwork to serialize."); };
++
++    // Create XML Document and main section
++    tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
++    tinyxml2::XMLElement* neural_network_element = doc->NewElement("NeuralNetwork");
++    doc->InsertFirstChild(neural_network_element);
++
++
++    // Assumption: Every neural network has an input and an output layer
++    // So we start serializing the input layer
++
++    // Start the input section
++    inputs2xml(doc, inputs_names, neural_network_element);
++
++    // Loop the internal architecture
++    for (size_t l=0; l != layers_number; ++l) {
++
++    // Read the current layer and determine layer type
++    Layer::LayerType ltype = layers_pointers[l]->get_type();
++
++       // The following actions will be dependent on the layer type
++       // This Switch panel was copied from layer.cpp, lines 27ff
++       // ...so it should reflect the complete range of possible layer types
++       switch (ltype) {
++   
++              case Layer::PrincipalComponents:
++              {
++                  // TODO: Action: XML Child PrincipalComponents
++                  break;
++              }
++              case Layer::Convolutional:
++              {
++                  // TODO: Action: XML Child Convolutional
++                  break;
++              }
++              case Layer::Perceptron:
++              {
++                  // Action: XML Child Perceptron
++   
++                  // This function only returns the first perceptron, hence cannot be used for serialisation
++                  PerceptronLayer* perceptron_layer_pointer = dynamic_cast<PerceptronLayer*>(layers_pointers[l]);
++   
++                  // Start the perceptron section
++                  tinyxml2::XMLDocument* perceptron_document = perceptron_layer_pointer->to_XML();
++
++                  // copy the subtree to the neural network object
++                  tinyxml2::XMLElement* perceptron_element = perceptron_document->FirstChildElement("MultilayerPerceptron");
++                  tinyxml2::XMLNode* node = perceptron_element->DeepClone(doc);
++                  neural_network_element->InsertEndChild(node);
++
++                  // Delete the perceptron document
++                  delete perceptron_document;
++ 
++                  break;
++              }
++              case Layer::Bounding:
++              {
++                  // Action: XML Child Bounding
++   
++                  // The unscaling serialisation to XML is fully implemented, so we just give it a call
++                  // get the pointer and retrieve the subtree document
++                  BoundingLayer* bounding_layer_pointer = get_bounding_layer_pointer();
++                  tinyxml2::XMLDocument* bounding_document = bounding_layer_pointer->to_XML();
++   
++                  // copy the subtree to the neural network object
++                  tinyxml2::XMLElement* bounding_element = bounding_document->FirstChildElement("BoundingLayer");
++                  tinyxml2::XMLNode* node = bounding_element->DeepClone(doc);
++                  neural_network_element->InsertEndChild(node);
++   
++                  // Delete the bounding document
++                  delete bounding_document;
++   
++                  break;
++              }
++              case Layer::Pooling:
++              {
++                  // TODO: Action: XML Child Pooling
++                  break;
++              }
++              case Layer::Probabilistic:
++              {
++                  // Action: XML Child Probabilistic
++                  // The probabilistic serialisation to XML is fully implemented, so we just give it a call
++                  // get the pointer and retrieve the subtree document
++                  ProbabilisticLayer* probabilistic_layer_pointer = get_probabilistic_layer_pointer();
++                  tinyxml2::XMLDocument* probabilistic_document = probabilistic_layer_pointer->to_XML();
++   
++                  // copy the subtree to the neural network object
++                  tinyxml2::XMLElement* probabilistic_element = probabilistic_document->FirstChildElement("ProbabilisticLayer");
++                  tinyxml2::XMLNode* node = probabilistic_element->DeepClone(doc);
++                  neural_network_element->InsertEndChild(node);
++   
++                  // Delete the probabilistic document
++                  delete probabilistic_document;
++   
++                  break;
++              }
++              case Layer::LongShortTermMemory:
++              {
++                  // TODO: Action: XML Child LongShortTermMemory
++                  break;
++              }
++              case Layer::Recurrent:
++              {
++                  // TODO: Action: XML Child Recurrent
++                  break;
++              }
++              case Layer::Scaling:
++              {
++                  // Action: XML Child Scaling
++                  // Start the scaling section
++                  // get the pointer and retrieve the subtree document
++                  ScalingLayer* scaling_layer_pointer = get_scaling_layer_pointer();
++                  tinyxml2::XMLDocument* scaling_document = scaling_layer_pointer->to_XML();
++   
++                  // copy the subtree to the neural network object
++                  tinyxml2::XMLElement* scaling_element = scaling_document->FirstChildElement("ScalingLayer");
++                  tinyxml2::XMLNode* node = scaling_element->DeepClone(doc);
++                  neural_network_element->InsertEndChild(node);
++   
++                  // Delete the scaling document
++                  delete scaling_document;
++   
++                  break;
++              }
++              case Layer::Unscaling:
++              {
++                  // Action: XML Child Ununscaling
++   
++                  // The unscaling serialisation to XML is fully implemented, so we just give it a call
++                  // get the pointer and retrieve the subtree document
++                  UnscalingLayer* unscaling_layer_pointer = get_unscaling_layer_pointer();
++                  tinyxml2::XMLDocument* unscaling_document = unscaling_layer_pointer->to_XML();
++   
++                  // copy the subtree to the neural network object
++                  tinyxml2::XMLElement* unscaling_element = unscaling_document->FirstChildElement("UnscalingLayer");
++                  tinyxml2::XMLNode* node = unscaling_element->DeepClone(doc);
++                  neural_network_element->InsertEndChild(node);
++   
++                  // Delete the unscaling document
++                  delete unscaling_document;
++
++                  break;
++           }
++       }
++    }
++
++    // Finish the main section
++    doc->InsertEndChild(neural_network_element);
++
++    // Return the result
++    return doc;
++}
++
+ 
+ /// Serializes the neural network object into a XML document of the TinyXML library.
+ /// See the OpenNN manual for more information about the format of this element. 
+ ///@todo
+-
++/*
+ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
+ {
+     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+@@ -1538,7 +1857,7 @@
+ 
+     return document;
+ }
+-
++*/
+ 
+ /// Serializes the neural network object into a XML document of the TinyXML library without keep the DOM tree in memory.
+ /// See the OpenNN manual for more information about the format of this document.
+@@ -1768,8 +2087,8 @@
+     Vector<string> inputs_names = get_inputs_names();
+     Vector<string> outputs_names = get_outputs_names();
+ 
+-    cout << "Inputs names: " << inputs_names << endl;
+-    cout << "Outputs names: " << outputs_names << endl;
++    //cout << "Inputs names: " << inputs_names << endl;
++    //cout << "Outputs names: " << outputs_names << endl;
+ 
+     size_t position = 0;
+ 

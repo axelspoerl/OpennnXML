@@ -1,0 +1,97 @@
+--- perceptron_layer.cpp.ORIG	2020-01-02 17:55:58.000000000 +0100
++++ perceptron_layer.cpp	2020-07-19 12:18:35.662063541 +0200
+@@ -1233,7 +1233,7 @@
+     buffer << "Inputs number: " << inputs_number << endl;
+     buffer << "Activation function: " << write_activation_function() << endl;
+     buffer << "Neurons number: " << neurons_number << endl;
+-    buffer << "Biases:\n " << biases << endl;
++    //buffer << "Biases:\n " << biases << endl;
+     buffer << "Synaptic_weights:\n" << synaptic_weights;
+ 
+     return buffer.str();
+@@ -1259,11 +1259,84 @@
+     }
+ }
+ 
++
++/// Added by Axel Spoerl, 18.07.2020
++/// Intention: Add to_XML function
++
++// Serialize Perceptrons
++tinyxml2::XMLDocument* PerceptronLayer::to_XML() const
++{
++   // String for operations
++   string xmltext;
++
++   // Create a node document
++   tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
++
++   tinyxml2::XMLElement* perceptron_element = doc->NewElement("MultilayerPerceptron");
++   doc->InsertFirstChild(perceptron_element);
++
++   // First part of the perceptron section is the architecture
++   tinyxml2::XMLElement* architecture_element = doc->NewElement("Architecture");
++
++   // Read the architecture
++   // ...and copy it to a char array as required by tinyxml
++   const size_t p_inputs  = get_inputs_number();
++   const size_t p_neurons = get_neurons_number();
++   xmltext = to_string(p_inputs) + " " + to_string(p_neurons);
++   //xmltext = to_string(p_inputs) + " " + to_string(p_neurons) + " " + to_string(p_outputs);
++   char * INP_NUM = new char[xmltext.length() + 1];
++   strcpy (INP_NUM,xmltext.c_str());
++
++   // Write architecture to the doc, followed by the end child
++   tinyxml2::XMLText* architecture_text = doc->NewText(INP_NUM);
++   architecture_element->InsertEndChild(architecture_text);
++   perceptron_element->InsertEndChild(architecture_element);
++   delete INP_NUM;  // no longer needed
++
++   // Retrieve activation function
++   xmltext=write_activation_function();
++   INP_NUM = new char[xmltext.length() + 1];
++   strcpy (INP_NUM,xmltext.c_str());
++
++   // Insert and end child for activation function
++   tinyxml2::XMLElement* activation_element = doc->NewElement("LayersActivationFunction");
++   perceptron_element->InsertEndChild(activation_element);
++   tinyxml2::XMLText* activation_text = doc->NewText(INP_NUM);
++   activation_element->InsertEndChild(activation_text);
++   perceptron_element->InsertEndChild(activation_element);
++   delete INP_NUM;  // no longer needed
++
++   // Retrieve Parameters
++   vector <double> parameters = get_parameters();
++
++   // Serialize vector into a string
++   xmltext = "";
++   for (size_t p=0; p != parameters.size(); ++p) {
++       xmltext = xmltext + to_string(parameters[p]);
++   if (p < (parameters.size() - 1)) {xmltext = xmltext + " ";}
++   INP_NUM = new char[xmltext.length() + 1];
++   strcpy (INP_NUM,xmltext.c_str());
++   };
++
++   // Insert Parameter section
++   tinyxml2::XMLElement* parameters_element = doc->NewElement("Parameters");
++   perceptron_element->InsertEndChild(parameters_element);
++   tinyxml2::XMLText* parameters_text = doc->NewText(INP_NUM);
++   parameters_element->InsertEndChild(parameters_text);
++   perceptron_element->InsertEndChild(parameters_element);
++   delete INP_NUM;  // no longer needed
++
++
++   // Finish the Perceptron layer section
++   doc->InsertEndChild(perceptron_element);
++   return doc;
++}
++
+ }
+ 
+ // OpenNN: Open Neural Networks Library.
+ // Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+-//
++
+ // This library is free software; you can redistribute it and/or
+ // modify it under the terms of the GNU Lesser General Public
+ // License as published by the Free Software Foundation; either

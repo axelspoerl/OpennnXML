@@ -1,0 +1,25 @@
+#   OpenNN: Open Neural Networks Library
+#   www.opennn.net
+#
+#   O P E N N N   P R O J E C T
+#
+#   Artificial Intelligence Techniques SL (Artelnics)
+#   artelnics@artelnics.com
+
+# CONFIGURATION
+
+TEMPLATE = subdirs
+
+CONFIG += ordered
+CONFIG +=c++11
+
+CONFIG(release, debug|release) {
+DEFINES += NDEBUG
+}
+
+SUBDIRS += opennn
+SUBDIRS += tests
+SUBDIRS += examples
+SUBDIRS += blank
+
+

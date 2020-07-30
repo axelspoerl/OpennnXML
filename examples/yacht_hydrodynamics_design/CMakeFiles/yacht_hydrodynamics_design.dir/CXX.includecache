@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/axel/Downloads/opennn_4.0/examples/yacht_hydrodynamics_design/main.cpp
+iostream
+-
+fstream
+-
+sstream
+-
+string
+-
+cstring
+-
+time.h
+-
+opennn/opennn.h
+/home/axel/Downloads/opennn_4.0/examples/yacht_hydrodynamics_design/opennn/opennn.h
+

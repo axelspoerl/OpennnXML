@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/yacht_hydrodynamics_design.dir/main.cpp.o  -o yacht_hydrodynamics_design   -L/home/axel/Downloads/opennn_4.0/examples/yacht_hydrodynamics_design/opennn  -Wl,-rpath,/home/axel/Downloads/opennn_4.0/examples/yacht_hydrodynamics_design/opennn -l../../opennn/Release/opennn 

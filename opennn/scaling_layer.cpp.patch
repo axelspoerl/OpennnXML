@@ -1,0 +1,234 @@
+--- scaling_layer.cpp.ORIG	2020-01-02 17:55:58.000000000 +0100
++++ scaling_layer.cpp	2020-07-18 22:30:30.642518545 +0200
+@@ -1188,115 +1188,131 @@
+ 
+ /// Serializes the scaling layer object into a XML document of the TinyXML library.
+ /// See the OpenNN manual for more information about the format of this element. 
++/// Modified by Axel Spoerl, 18.07.2020
++/// Intention: Complete the function
+ 
+ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
+ {
+-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
++    // String for operations
++    string xmltext;
+ 
+-    ostringstream buffer;
++    // Create a new Document
++    tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
+ 
+-    tinyxml2::XMLElement* scaling_layer_element = document->NewElement("ScalingLayer");
++    // Start the scaling layer section
++    tinyxml2::XMLElement* scaling_element = doc->NewElement("ScalingLayer");
++    doc->InsertFirstChild(scaling_element);
++
++    // First part of the scaling section is the number of inputs
++    tinyxml2::XMLElement* scaling_number_element = doc->NewElement("ScalingNeuronsNumber");
++    scaling_element->InsertFirstChild(scaling_number_element);
++
++    // Read number of scaling neurons from size of the input names vector
++    // ...and copy it to a char array as required by tinyxml
++    size_t scaling_neurons_number = get_neurons_number();
++    xmltext = to_string(scaling_neurons_number);
++    char * INP_NUM = new char[xmltext.length() + 1];
++    strcpy (INP_NUM,xmltext.c_str());
++
++    // Write number of scaling neurons to the doc, followed by the end child
++    tinyxml2::XMLText* scaling_neurons_number_text = doc->NewText(INP_NUM);
++    scaling_number_element->InsertEndChild(scaling_neurons_number_text);
++    scaling_element->InsertEndChild(scaling_number_element);
++    delete INP_NUM;  // no longer needed
++
++    // Before we loop over the Neurons, we need the minimums, maximums, means,
++    // standard deviation and the scaling methods per neuro
++    vector <double> minimums = get_minimums();
++    vector <double> maximums = get_maximums();
++    vector <double> means    = get_means();
++    vector <double> standard_deviations = get_standard_deviations();
++    vector <string> scaling_methods = write_scaling_methods();
++
++
++    // Loop over scaling Neurons
++    for (size_t s=0; s!=scaling_neurons_number; ++s) {
++
++        // Start a section for the scaling neuron with index
++        tinyxml2::XMLElement* scaling_neuron_element = doc->NewElement("ScalingNeuron");
++        int item_index = s + 1;
++
++        scaling_neuron_element->SetAttribute("Index", item_index);
++        scaling_element->InsertFirstChild(scaling_neuron_element);
++
++        // Add Minimum element
++        tinyxml2::XMLElement* scaling_neuron_minimum_element = doc->NewElement("Minimum");
++        scaling_neuron_element->InsertFirstChild(scaling_neuron_minimum_element);
++	
++        // read the minimum
++        xmltext = to_string(minimums[s]);
++        char * INP_NAME = new char[xmltext.length() + 1];
++        strcpy (INP_NAME,xmltext.c_str());
++        tinyxml2::XMLText* scaling_neuron_min_text = doc->NewText(INP_NAME);
++        scaling_neuron_minimum_element->InsertEndChild(scaling_neuron_min_text);
++        scaling_neuron_element->InsertEndChild(scaling_neuron_minimum_element);
++        delete INP_NAME; // no longer needed
++
++        // Add Maximum element
++        tinyxml2::XMLElement* scaling_neuron_maximum_element = doc->NewElement("Maximum");
++        scaling_neuron_element->InsertFirstChild(scaling_neuron_maximum_element);
++	
++        // read the maximum
++        xmltext = to_string(maximums[s]);
++        INP_NAME = new char[xmltext.length() + 1];
++        strcpy (INP_NAME,xmltext.c_str());
++        tinyxml2::XMLText* scaling_neuron_max_text = doc->NewText(INP_NAME);
++        scaling_neuron_maximum_element->InsertEndChild(scaling_neuron_max_text);
++        scaling_neuron_element->InsertEndChild(scaling_neuron_maximum_element);
++        delete INP_NAME; // no longer needed
++
++        // Add Means element
++        tinyxml2::XMLElement* scaling_neuron_means_element = doc->NewElement("Mean");
++        scaling_neuron_element->InsertFirstChild(scaling_neuron_means_element);
++	
++        // read the means
++        xmltext = to_string(means[s]);
++        INP_NAME = new char[xmltext.length() + 1];
++        strcpy (INP_NAME,xmltext.c_str());
++        tinyxml2::XMLText* scaling_neuron_mean_text = doc->NewText(INP_NAME);
++        scaling_neuron_means_element->InsertEndChild(scaling_neuron_mean_text);
++        scaling_neuron_element->InsertEndChild(scaling_neuron_means_element);
++        delete INP_NAME; // no longer needed
++
++        // Add Standard Deviation element
++        tinyxml2::XMLElement* scaling_neuron_st_dev_element = doc->NewElement("StandardDeviation");
++        scaling_neuron_element->InsertFirstChild(scaling_neuron_st_dev_element);
++	
++        // read the Standard Deviation
++        xmltext = to_string(standard_deviations[s]);
++        INP_NAME = new char[xmltext.length() + 1];
++        strcpy (INP_NAME,xmltext.c_str());
++        tinyxml2::XMLText* scaling_neuron_sdev_text = doc->NewText(INP_NAME);
++        scaling_neuron_st_dev_element->InsertEndChild(scaling_neuron_sdev_text);
++        scaling_neuron_element->InsertEndChild(scaling_neuron_st_dev_element);
++        delete INP_NAME; // no longer needed
++
++        // Add Scaling Method
++        tinyxml2::XMLElement* scaling_neuron_scaling_method_element = doc->NewElement("ScalingMethod");
++        scaling_neuron_element->InsertFirstChild(scaling_neuron_scaling_method_element);
++	
++        // read the Scaling Method
++        INP_NAME = new char[scaling_methods[s].length() + 1];
++        strcpy (INP_NAME,scaling_methods[s].c_str());
++        tinyxml2::XMLText* scaling_neuron_smeth_text = doc->NewText(INP_NAME);
++        scaling_neuron_scaling_method_element->InsertEndChild(scaling_neuron_smeth_text);
++        scaling_neuron_element->InsertEndChild(scaling_neuron_scaling_method_element);
++        delete INP_NAME; // no longer needed
++        
++        // Finish the scaling neuron section
++        scaling_element->InsertEndChild(scaling_neuron_element);
+ 
+-    document->InsertFirstChild(scaling_layer_element);
++    };
+ 
+-    // Scaling neurons number
++    // Finish the scaling layer section
++    doc->InsertEndChild(scaling_element);
+ 
+-    tinyxml2::XMLElement* size_element = document->NewElement("ScalingNeuronsNumber");
+-    scaling_layer_element->LinkEndChild(size_element);
+ 
+-    const size_t neurons_number = get_neurons_number();
+-
+-    buffer.str("");
+-    buffer << neurons_number;
+-
+-    tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
+-    size_element->LinkEndChild(size_text);
+-
+-    const Vector<string> scaling_methods_string = write_scaling_methods();
+-
+-    for(size_t i = 0; i < neurons_number; i++)
+-    {
+-        tinyxml2::XMLElement* scaling_neuron_element = document->NewElement("ScalingNeuron");
+-        scaling_neuron_element->SetAttribute("Index", static_cast<unsigned>(i+1));
+-
+-        scaling_layer_element->LinkEndChild(scaling_neuron_element);
+-
+-        // Minimum
+-
+-        tinyxml2::XMLElement* minimum_element = document->NewElement("Minimum");
+-        scaling_neuron_element->LinkEndChild(minimum_element);
+-
+-        buffer.str("");
+-        buffer << descriptives[i].minimum;
+-
+-        tinyxml2::XMLText* minimum_text = document->NewText(buffer.str().c_str());
+-        minimum_element->LinkEndChild(minimum_text);
+-
+-        // Maximum
+-
+-        tinyxml2::XMLElement* maximum_element = document->NewElement("Maximum");
+-        scaling_neuron_element->LinkEndChild(maximum_element);
+-
+-        buffer.str("");
+-        buffer << descriptives[i].maximum;
+-
+-        tinyxml2::XMLText* maximum_text = document->NewText(buffer.str().c_str());
+-        maximum_element->LinkEndChild(maximum_text);
+-
+-        // Mean
+-
+-        tinyxml2::XMLElement* mean_element = document->NewElement("Mean");
+-        scaling_neuron_element->LinkEndChild(mean_element);
+-
+-        buffer.str("");
+-        buffer << descriptives[i].mean;
+-
+-        tinyxml2::XMLText* mean_text = document->NewText(buffer.str().c_str());
+-        mean_element->LinkEndChild(mean_text);
+-
+-        // Standard deviation
+-
+-        tinyxml2::XMLElement* standard_deviation_element = document->NewElement("StandardDeviation");
+-        scaling_neuron_element->LinkEndChild(standard_deviation_element);
+-
+-        buffer.str("");
+-        buffer << descriptives[i].standard_deviation;
+-
+-        tinyxml2::XMLText* standard_deviation_text = document->NewText(buffer.str().c_str());
+-        standard_deviation_element->LinkEndChild(standard_deviation_text);
+-
+-        // Scaling method
+-
+-        tinyxml2::XMLElement* scaling_method_element = document->NewElement("ScalingMethod");
+-        scaling_neuron_element->LinkEndChild(scaling_method_element);
+-
+-        buffer.str("");
+-        buffer << scaling_methods_string[i];
+-
+-        tinyxml2::XMLText* scaling_method_text = document->NewText(buffer.str().c_str());
+-        scaling_method_element->LinkEndChild(scaling_method_text);
+-    }
+-
+-    // Scaling method
+-
+-//    tinyxml2::XMLElement* method_element = document->NewElement("ScalingMethod");
+-//    scaling_layer_element->LinkEndChild(method_element);
+-
+-//    tinyxml2::XMLText* method_text = document->NewText(write_scaling_method().c_str());
+-//    method_element->LinkEndChild(method_text);
+-
+-    // Display warnings
+-
+-    //   tinyxml2::XMLElement* display_element = document->NewElement("Display");
+-    //   scaling_layer_element->LinkEndChild(display_element);
+-
+-    //   buffer.str("");
+-    //   buffer << display;
+-
+-    //   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+-    //   display_element->LinkEndChild(display_text);
+-
+-    return document;
++    return doc;
+ }
+ 
+ 

@@ -1,0 +1,11 @@
+--- perceptron_layer.h.ORIG	2020-01-02 17:55:58.000000000 +0100
++++ perceptron_layer.h	2020-07-18 22:13:52.741683993 +0200
+@@ -184,6 +184,8 @@
+ 
+    string object_to_string() const;
+ 
++   virtual tinyxml2::XMLDocument* to_XML() const;
++
+ protected:
+ 
+    // MEMBERS
