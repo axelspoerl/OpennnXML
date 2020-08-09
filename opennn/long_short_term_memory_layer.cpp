@@ -3970,6 +3970,7 @@ tinyxml2::XMLDocument* LongShortTermMemoryLayer::to_XML() const
 
    // Finish the LSTM layer section
    doc->InsertEndChild(longshortterm_element);
+   //@@DEBUG
    //doc->SaveFile("lstm.xml");
    return doc;
    };
